@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, FileText, Plus, Settings } from "lucide-react";
+import { Home, DollarSign, Plus, Settings } from "lucide-react";
 
 /**
  * Navigation items for the bottom bar.
@@ -11,7 +11,7 @@ import { Home, FileText, Plus, Settings } from "lucide-react";
  */
 const navItems = [
   { href: "/", icon: Home, label: "Home" },
-  { href: "/demo", icon: FileText, label: "Notes" },
+  { href: "/expenses", icon: DollarSign, label: "Expenses" },
   { href: "/settings", icon: Settings, label: "Settings" },
 ];
 

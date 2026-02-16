@@ -59,7 +59,7 @@ export async function updateSession(
  * >>> UPDATE THIS ARRAY when you add new protected routes to your app. <<<
  */
 export function isProtectedPath(pathname: string): boolean {
-  const protectedPaths = ["/", "/demo", "/settings"];
+  const protectedPaths = ["/", "/expenses", "/settings"];
   return protectedPaths.some(
     (path) => pathname === path || (path !== "/" && pathname.startsWith(`${path}/`))
   );

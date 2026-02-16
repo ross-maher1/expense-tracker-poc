@@ -3,18 +3,19 @@
 /**
  * Dashboard / Home Page
  *
- * >>> Replace this with your app's dashboard. <<<
- * This demo shows note counts and quick actions.
+ * Shows expense count, total spent, and quick actions.
  */
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { formatCurrency } from "@/lib/utils";
 
 export default function HomePage() {
   const { user, profile } = useAuth();
-  const [noteCount, setNoteCount] = useState(0);
+  const [expenseCount, setExpenseCount] = useState(0);
+  const [totalSpent, setTotalSpent] = useState(0);
 
   const supabase = useMemo(() => {
     try {
@@ -30,16 +31,24 @@ export default function HomePage() {
 
     (async () => {
       const { data } = await supabase
-        .from("demo_notes")
-        .select("id")
+        .from("expenses")
+        .select("amount")
         .eq("user_id", user.id);
 
       if (!cancelled && data) {
-        setNoteCount(data.length);
+        setExpenseCount(data.length);
+        setTotalSpent(
+          data.reduce(
+            (sum: number, e: { amount: number }) => sum + Number(e.amount),
+            0
+          )
+        );
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [user, supabase]);
 
   return (
@@ -48,40 +57,38 @@ export default function HomePage() {
       <div className="space-y-2">
         <p className="type-meta">Dashboard</p>
         <h1 className="type-h1">
-          {profile?.full_name ? `Welcome, ${profile.full_name}` : "Welcome"}
+          {profile?.full_name
+            ? `Welcome, ${profile.full_name}`
+            : "Expense Tracker"}
         </h1>
-        <p className="type-lead">
-          This is the mini-app template. Data is stored in Supabase.
-        </p>
+        <p className="type-lead">Track and manage your expenses.</p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid gap-6 md:grid-cols-2">
         <Link
-          href="/demo"
+          href="/expenses"
           className="group rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm transition hover:border-slate-300 hover:shadow-md"
         >
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Notes</h2>
+            <h2 className="text-lg font-semibold">Expenses</h2>
             <span className="text-2xl font-bold text-slate-900">
-              {noteCount}
+              {expenseCount}
             </span>
           </div>
           <p className="mt-2 text-sm text-slate-600">
-            Total notes created
+            Total expenses recorded
           </p>
         </Link>
 
         <div className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold">Plan</h2>
-            <span className="text-2xl font-bold text-emerald-600 capitalize">
-              {profile?.subscription_tier || "free"}
+            <h2 className="text-lg font-semibold">Total Spent</h2>
+            <span className="text-2xl font-bold text-slate-900">
+              {formatCurrency(totalSpent)}
             </span>
           </div>
-          <p className="mt-2 text-sm text-slate-600">
-            Current subscription tier
-          </p>
+          <p className="mt-2 text-sm text-slate-600">Across all categories</p>
         </div>
       </div>
 
@@ -90,10 +97,10 @@ export default function HomePage() {
         <h2 className="text-lg font-semibold">Quick Actions</h2>
         <div className="mt-4 flex flex-wrap gap-3">
           <Link
-            href="/demo"
+            href="/expenses"
             className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-slate-800"
           >
-            Add Note
+            Add Expense
           </Link>
           <Link
             href="/settings"

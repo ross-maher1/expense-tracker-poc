@@ -3,8 +3,6 @@
  *
  * Shared types for the unified user model (profiles table)
  * plus app-specific tables.
- *
- * >>> Update this file when you add your own app-specific tables. <<<
  */
 
 // ============================================================================
@@ -42,27 +40,33 @@ export interface ProfileUpdate {
 }
 
 // ============================================================================
-// DEMO NOTES (delete when building your real app)
+// EXPENSES
 // ============================================================================
 
-export interface DemoNoteRow {
+export interface ExpenseRow {
   id: string;
   user_id: string;
+  amount: number;
+  category: string;
+  note: string | null;
+  date: string;
   created_at: string;
   updated_at: string;
-  title: string;
-  content: string | null;
 }
 
-export interface DemoNoteInsert {
+export interface ExpenseInsert {
   user_id: string;
-  title: string;
-  content?: string | null;
+  amount: number;
+  category: string;
+  note?: string | null;
+  date?: string;
 }
 
-export interface DemoNoteUpdate {
-  title?: string;
-  content?: string | null;
+export interface ExpenseUpdate {
+  amount?: number;
+  category?: string;
+  note?: string | null;
+  date?: string;
 }
 
 // ============================================================================
@@ -77,10 +81,10 @@ export interface Database {
         Insert: ProfileInsert;
         Update: ProfileUpdate;
       };
-      demo_notes: {
-        Row: DemoNoteRow;
-        Insert: DemoNoteInsert;
-        Update: DemoNoteUpdate;
+      expenses: {
+        Row: ExpenseRow;
+        Insert: ExpenseInsert;
+        Update: ExpenseUpdate;
       };
     };
   };

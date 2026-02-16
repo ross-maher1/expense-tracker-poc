@@ -17,8 +17,8 @@
  * };
  */
 
-export const APP_NAME = "Mini App";
+export const APP_NAME = "Expense Tracker";
 
 export const STORAGE_KEYS = {
-  settings: "mini_app_settings",
+  settings: "expense_tracker_settings",
 } as const;

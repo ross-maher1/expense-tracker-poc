@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
  * >>> Update the metadata for your app. <<<
  */
 export const metadata: Metadata = {
-  title: "Mini App",
-  description: "A mini-app built on the unified-user architecture",
+  title: "Expense Tracker",
+  description: "Track your expenses",
 };
 
 export default function RootLayout({
