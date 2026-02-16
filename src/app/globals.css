@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f1ea;
+  --foreground: #111827;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ==========================================================================
+   Layout Classes
+   ========================================================================== */
+
+.app-shell {
+  @apply relative min-h-screen overflow-hidden bg-[var(--background)] text-slate-900;
+}
+
+.app-blob {
+  @apply pointer-events-none absolute inset-x-0 top-[-18%] h-[320px] max-w-5xl -translate-x-1/2 left-1/2 rounded-full opacity-80 blur-3xl;
+  background: radial-gradient(circle at 20% 40%, #fbbf24 0%, transparent 35%),
+    radial-gradient(circle at 50% 30%, #fb7185 0%, transparent 45%),
+    radial-gradient(circle at 75% 20%, #c084fc 0%, transparent 40%);
+}
+
+.app-content {
+  @apply relative z-[1] mx-auto w-full max-w-6xl px-6 pb-28 pt-10;
+}
+
+/* ==========================================================================
+   Typography Classes
+   ========================================================================== */
+
+.type-meta {
+  @apply text-xs uppercase tracking-[0.3rem] text-slate-500;
+}
+
+.type-h1 {
+  @apply text-3xl font-semibold tracking-tight md:text-4xl;
+}
+
+.type-lead {
+  @apply text-sm text-slate-600;
+}
+
+.type-item-title {
+  @apply text-sm font-semibold italic text-slate-900;
+}
+
+/* ==========================================================================
+   Print Styles
+   ========================================================================== */
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .print-reset {
+    background: white !important;
+    color: black !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    border: none !important;
+  }
+
+  input {
+    border: none !important;
+    background: transparent !important;
+  }
+}
