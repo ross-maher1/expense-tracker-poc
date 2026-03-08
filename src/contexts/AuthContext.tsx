@@ -76,18 +76,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Fetch profile with a timeout so it never hangs forever
   const fetchProfile = useCallback(
     async (userId: string): Promise<Profile | null> => {
       if (!supabase) return null;
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000);
+
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", userId)
-          .single();
+          .single()
+          .abortSignal(controller.signal);
+
+        clearTimeout(timeout);
 
         if (error) {
-          console.error("Error fetching profile:", error);
+          console.error("Error fetching profile:", error.message);
           return null;
         }
 
@@ -106,11 +113,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState((prev) => ({ ...prev, profile }));
   }, [state.user, fetchProfile]);
 
+  // Initialize auth on mount — this is the ONLY place that sets up the
+  // initial session. No race conditions with onAuthStateChange.
   useEffect(() => {
     if (!supabase) {
       setState((prev) => ({ ...prev, loading: false }));
       return;
     }
+
+    let cancelled = false;
 
     const initializeAuth = async () => {
       try {
@@ -119,13 +130,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error,
         } = await supabase.auth.getSession();
 
+        if (cancelled) return;
+
         if (error) {
-          setState((prev) => ({ ...prev, error, loading: false }));
+          setState({ user: null, session: null, profile: null, loading: false, error });
           return;
         }
 
         if (session?.user) {
           const profile = await fetchProfile(session.user.id);
+          if (cancelled) return;
           setState({
             user: session.user,
             session,
@@ -143,31 +157,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           });
         }
       } catch (err) {
-        setState((prev) => ({
-          ...prev,
-          error:
-            err instanceof Error ? err : new Error("Failed to initialize auth"),
+        if (cancelled) return;
+        setState({
+          user: null,
+          session: null,
+          profile: null,
+          error: err instanceof Error ? err : new Error("Failed to initialize auth"),
           loading: false,
-        }));
+        });
       }
     };
 
     initializeAuth();
 
+    // Listen for auth changes (e.g. token refresh, sign out in another tab).
+    // IMPORTANT: Keep this handler synchronous — do NOT await fetchProfile here.
+    // Profile fetching is handled by initializeAuth after page reload.
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(
-      async (_event: AuthChangeEvent, session: Session | null) => {
-        if (session?.user) {
-          const profile = await fetchProfile(session.user.id);
-          setState({
-            user: session.user,
-            session,
-            profile,
-            loading: false,
-            error: null,
-          });
-        } else {
+      (_event: AuthChangeEvent, session: Session | null) => {
+        if (cancelled) return;
+
+        // Only handle SIGNED_OUT here. For SIGNED_IN, we rely on the
+        // page reload (window.location.href) which triggers initializeAuth.
+        // This avoids the race condition between onAuthStateChange and
+        // the redirect in the login page.
+        if (!session) {
           setState({
             user: null,
             session: null,
@@ -175,44 +191,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             loading: false,
             error: null,
           });
+        } else if (_event === "TOKEN_REFRESHED") {
+          // Update session on token refresh without re-fetching profile
+          setState((prev) => ({
+            ...prev,
+            session,
+            user: session.user,
+          }));
         }
       }
     );
 
     return () => {
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, [supabase, fetchProfile]);
 
+  // signIn: Just calls Supabase. Does NOT set state or trigger profile fetch.
+  // The login page will do window.location.href after this returns,
+  // which causes a full page reload → initializeAuth runs on the new page.
   const signIn = useCallback(
     async ({ email, password }: SignInCredentials) => {
       if (!supabase) {
         const error = new Error("Supabase not initialized") as AuthError;
         return { error };
       }
-      setState((prev) => ({ ...prev, loading: true, error: null }));
 
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (error) {
-        setState((prev) => ({ ...prev, loading: false, error }));
-      }
-
       return { error };
     },
     [supabase]
   );
 
+  // signUp: Just calls Supabase.
   const signUp = useCallback(
     async ({ email, password, fullName }: SignUpCredentials) => {
       if (!supabase) {
         const error = new Error("Supabase not initialized") as AuthError;
         return { error };
       }
-      setState((prev) => ({ ...prev, loading: true, error: null }));
 
       const { error } = await supabase.auth.signUp({
         email,
@@ -224,10 +246,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
 
-      if (error) {
-        setState((prev) => ({ ...prev, loading: false, error }));
-      }
-
       return { error };
     },
     [supabase]
@@ -235,7 +253,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     if (!supabase) return;
-    setState((prev) => ({ ...prev, loading: true }));
     await supabase.auth.signOut();
     window.location.href = "/auth/login";
   }, [supabase]);

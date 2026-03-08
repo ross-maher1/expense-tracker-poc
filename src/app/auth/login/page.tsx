@@ -38,20 +38,25 @@ function LoginForm() {
     setError(null);
     setLoading(true);
 
-    const { error } = await signIn({
-      email: values.email,
-      password: values.password,
-    });
+    try {
+      const { error } = await signIn({
+        email: values.email,
+        password: values.password,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Full page reload ensures middleware re-runs and sets auth cookies.
+      // Do NOT use router.push — it won't trigger middleware.
+      window.location.href = redirectTo;
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
       setLoading(false);
-      return;
     }
-
-    // Full page reload ensures middleware re-runs and sets auth cookies
-    // eslint-disable-next-line react-hooks/immutability
-    window.location.href = redirectTo;
   };
 
   return (

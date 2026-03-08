@@ -38,48 +38,28 @@ export default function SignupPage() {
     setError(null);
     setLoading(true);
 
-    const { error } = await signUp({
-      email: values.email,
-      password: values.password,
-      fullName: values.fullName,
-    });
+    try {
+      const { error } = await signUp({
+        email: values.email,
+        password: values.password,
+        fullName: values.fullName,
+      });
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+
+      // With email auto-confirm disabled, signup creates an active session
+      // immediately. Redirect to home via full page reload so middleware
+      // picks up the new auth cookies.
+      window.location.href = "/";
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
       setLoading(false);
-      return;
     }
-
-    setSuccess(true);
-    setLoading(false);
   };
-
-  if (success) {
-    return (
-      <main className="space-y-10">
-        <div className="space-y-2">
-          <p className="type-meta">Authentication</p>
-          <h1 className="type-h1">Check Your Email</h1>
-          <p className="type-lead">
-            We&apos;ve sent you a confirmation link. Please check your email to
-            complete your registration.
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white/85 p-6 shadow-sm max-w-md">
-          <p className="text-sm text-slate-600">
-            Didn&apos;t receive the email?{" "}
-            <button
-              onClick={() => setSuccess(false)}
-              className="font-medium text-slate-900 hover:underline"
-            >
-              Try again
-            </button>
-          </p>
-        </div>
-      </main>
-    );
-  }
 
   return (
     <main className="space-y-10">
